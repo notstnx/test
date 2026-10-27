@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#11131a">
+<title>Голос заказов</title>
+<style>
+:root{color-scheme:dark;--bg:#0d0f15;--panel:#171a24;--panel2:#202432;--line:#303647;--text:#f3f5fb;--muted:#a6aec1;--accent:#b7f36b;--accentText:#15200b;--danger:#ff7474}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1000px 500px at 80% -10%,#242b3b 0%,transparent 65%),var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+main{width:min(920px,100%);margin:auto;padding:24px 16px 40px}
+header{display:flex;align-items:center;gap:12px;margin:6px 0 24px}
+.logo{width:44px;height:44px;display:grid;place-items:center;border-radius:14px;background:var(--accent);color:var(--accentText);font-size:23px;font-weight:900}
+h1{font-size:clamp(24px,5vw,34px);line-height:1.1;margin:0;letter-spacing:-.04em}
+.sub{color:var(--muted);font-size:14px;margin-top:5px}
+.panel{background:color-mix(in srgb,var(--panel) 94%,transparent);border:1px solid var(--line);border-radius:22px;padding:20px;margin:14px 0;box-shadow:0 12px 32px #0002}
+h2{font-size:17px;margin:0 0 14px}
+label{display:block;font-size:13px;color:var(--muted);margin:0 0 7px}
+input,select,textarea{width:100%;min-width:0;border:1px solid var(--line);background:#10131b;color:var(--text);border-radius:12px;padding:12px 13px;font:inherit;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px #b7f36b20}
+textarea{resize:vertical;min-height:94px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{min-width:0}
+.order-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end}
+button{border:0;border-radius:12px;padding:12px 16px;font:600 15px system-ui;cursor:pointer;transition:transform .12s,opacity .12s}
+button:active{transform:scale(.98)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.primary{background:var(--accent);color:var(--accentText)}
+.secondary{background:var(--panel2);border:1px solid var(--line);color:var(--text)}
+.danger{background:#3b2028;border:1px solid #61313a;color:#ffb2b2}
+.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+.preview{border:1px solid var(--line);background:#10131b;border-radius:14px;padding:14px;margin-top:14px}
+.preview small{display:block;color:var(--muted);margin-bottom:6px}
+#previewText{font-size:17px;overflow-wrap:anywhere}
+.range-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+output{color:var(--accent);font-variant-numeric:tabular-nums;font-size:13px;min-width:48px;text-align:right}
+input[type=range]{padding:0;accent-color:var(--accent);border:0;background:transparent;box-shadow:none}
+.range-group{display:grid;gap:15px}
+.note{font-size:13px;color:var(--muted);margin:10px 0 0}
+.status{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-top:14px}
+.dot{width:8px;height:8px;border-radius:50%;background:#778096}
+.dot.live{background:var(--accent);box-shadow:0 0 0 4px #b7f36b1c}
+.history{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.history li{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#11141d}
+.history-text{min-width:0;overflow-wrap:anywhere}
+.history time{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.history-actions{display:flex;gap:6px;flex-shrink:0}
+.iconbtn{padding:8px 10px;background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+.empty{color:var(--muted);font-size:14px;padding:8px 0}
+footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
+@media(max-width:600px){main{padding:18px 12px 30px}.panel{padding:16px;border-radius:18px}.grid{grid-template-columns:1fr;gap:12px}.order-row{grid-template-columns:1fr}.order-row button{width:100%}.actions button{flex:1}.history li{align-items:flex-start}.history-actions{flex-direction:column}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="logo" aria-hidden="true">♫</div>
+  <div><h1>Голос заказов</h1><div class="sub">Бесплатное озвучивание прямо на устройстве</div></div>
+</header>
+
+<section class="panel">
+  <h2>01 · Объявление</h2>
+  <div class="grid">
+    <div class="field">
+      <label for="orderNumber">Номер заказа</label>
+      <input id="orderNumber" inputmode="numeric" autocomplete="off" placeholder="Например, 125" maxlength="40">
+    </div>
+    <div class="field">
+      <label for="template">Шаблон объявления</label>
+      <select id="template">
+        <option value="Заказ номер {номер}, готов к выдаче.">Готов к выдаче</option>
+        <option value="Внимание! Заказ номер {номер}, подойдите к стойке выдачи.">Подойдите к стойке</option>
+        <option value="Заказ номер {номер} ожидает вас.">Ожидает вас</option>
+        <option value="Пожалуйста, заберите заказ номер {номер}.">Заберите заказ</option>
+        <option value="custom">Свой текст</option>
+      </select>
+    </div>
+  </div>
+  <div class="field" id="customWrap" hidden style="margin-top:14px">
+    <label for="customText">Свой текст — используй {номер} для номера заказа</label>
+    <textarea id="customText" maxlength="350">Заказ номер {номер}, готов к выдаче.</textarea>
+  </div>
+  <div class="preview">
+    <small>Текст для озвучивания</small>
+    <div id="previewText">Заказ номер …, готов к выдаче.</div>
+  </div>
+  <div class="actions">
+    <button class="primary" id="speakBtn">▶ Озвучить</button>
+    <button class="secondary" id="repeatBtn" disabled>↻ Повторить</button>
+    <button class="danger" id="stopBtn">■ Стоп</button>
+  </div>
+  <div class="status"><span id="statusDot" class="dot"></span><span id="statusText">Проверяю доступность голосов…</span></div>
+</section>
+
+<section class="panel">
+  <h2>02 · Голос и звучание</h2>
+  <div class="grid">
+    <div class="field">
+      <label for="voiceSelect">Голос на устройстве</label>
+      <select id="voiceSelect"><option value="">Загрузка голосов…</option></select>
+    </div>
+    <div class="field">
+      <label for="languageSelect">Предпочитаемый язык</label>
+      <select id="languageSelect">
+        <option value="ru">Русский</option>
+        <option value="auto">Любой язык</option>
+      </select>
+    </div>
+  </div>
+  <div class="range-group" style="margin-top:18px">
+    <div>
+      <div class="range-row"><label for="rate">Скорость речи</label><output id="rateOut">0,92×</output></div>
+      <input id="rate" type="range" min="0.65" max="1.25" step="0.01" value="0.92">
+    </div>
+    <div>
+      <div class="range-row"><label for="pitch">Высота голоса</label><output id="pitchOut">1,08</output></div>
+      <input id="pitch" type="range" min="0.7" max="1.5" step="0.01" value="1.08">
+    </div>
+    <div>
+      <div class="range-row"><label for="volume">Громкость речи</label><output id="volumeOut">100%</output></div>
+      <input id="volume" type="range" min="0" max="1" step="0.01" value="1">
+    </div>
+  </div>
+  <div class="actions"><button class="secondary" id="testBtn">♫ Проверить голос</button><button class="secondary" id="refreshVoicesBtn">Обновить голоса</button></div>
+  <p class="note">Совет: для более естественного звучания попробуй скорость 0,88–0,98 и выбери голос, помеченный как женский, если такая информация доступна. Названия и качество голосов зависят от браузера и операционной системы.</p>
+</section>
+
+<section class="panel">
+  <h2>03 · Последние объявления</h2>
+  <ul class="history" id="historyList"><li class="empty">Здесь появятся озвученные заказы.</li></ul>
+  <div class="actions"><button class="secondary" id="exportBtn">Скачать историю (.txt)</button><button class="secondary" id="clearBtn">Очистить историю</button></div>
+  <p class="note">История хранится только в памяти текущей страницы и очищается после её закрытия. Номера заказов никуда не отправляются.</p>
+</section>
+<footer>Работает локально через Web Speech API · Интернет для отправки заказов не используется</footer>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const synth = window.speechSynthesis;
+  let voices = [];
+  let lastText = '';
+  let history = [];
+  let speakingToken = 0;
+
+  const numberInput = $('orderNumber');
+  const template = $('template');
+  const customWrap = $('customWrap');
+  const customText = $('customText');
+  const previewText = $('previewText');
+  const voiceSelect = $('voiceSelect');
+
+  function getTemplate() {
+    return template.value === 'custom' ? customText.value : template.value;
+  }
+  function buildText() {
+    const n = numberInput.value.trim();
+    return getTemplate().replaceAll('{номер}', n || '…').trim();
+  }
+  function updatePreview() {
+    previewText.textContent = buildText();
+    customWrap.hidden = template.value !== 'custom';
+  }
+  function setStatus(text, live=false) {
+    $('statusText').textContent = text;
+    $('statusDot').classList.toggle('live', live);
+  }
+  function getPreferredVoices() {
+    const lang = $('languageSelect').value;
+    let list = voices.filter(v => lang === 'auto' || v.lang.toLowerCase().startsWith(lang));
+    if (!list.length && lang === 'ru') list = voices;
+    // Sort Russian voices first, then voices whose names commonly indicate a female voice.
+    const female = /female|woman|svetlana|dariya|irina|milena|elena|katya|alena|anna|polina|yulia|victoria|zira|samantha|jenny|aria/i;
+    return list.slice().sort((a,b) => {
+      const score = v => (v.lang.toLowerCase().startsWith('ru') ? 3 : 0) + (female.test(v.name) ? 2 : 0) + (v.localService ? 1 : 0);
+      return score(b)-score(a) || a.name.localeCompare(b.name);
+    });
+  }
+  function loadVoices() {
+    if (!synth) {
+      voiceSelect.innerHTML = '<option>Браузер не поддерживает озвучивание</option>';
+      setStatus('Этот браузер не поддерживает синтез речи');
+      $('speakBtn').disabled = true;
+      $('testBtn').disabled = true;
+      return;
+    }
+    voices = synth.getVoices();
+    const old = voiceSelect.value;
+    const list = getPreferredVoices();
+    voiceSelect.replaceChildren();
+    if (!list.length) {
+      const option = document.createElement('option');
+      option.value = '';
+      option.textContent = 'Голоса пока не найдены';
+      voiceSelect.append(option);
+      setStatus('Не удалось получить список голосов. Нажми «Обновить голоса».');
+      return;
+    }
+    list.forEach(v => {
+      const option = document.createElement('option');
+      option.value = v.voiceURI;
+      const local = v.localService ? ' · локальный' : '';
+      option.textContent = `${v.name} (${v.lang})${local}`;
+      voiceSelect.append(option);
+    });
+    const stillExists = list.some(v => v.voiceURI === old);
+    const recommended = list.find(v => /female|woman|svetlana|dariya|irina|milena|elena|katya|alena|anna|polina|yulia|victoria|zira/i.test(v.name)) || list.find(v => v.lang.toLowerCase().startsWith('ru')) || list[0];
+    voiceSelect.value = stillExists ? old : recommended.voiceURI;
+    const localCount = list.filter(v => v.localService).length;
+    setStatus(`${list.length} голос(ов) доступно${localCount ? `, ${localCount} отмечено как локальные` : ''}.`, false);
+  }
+  function selectedVoice() {
+    return voices.find(v => v.voiceURI === voiceSelect.value) || null;
+  }
+  function speak(text, addToHistory=true) {
+    if (!synth) return;
+    text = (text || '').trim();
+    if (!text || text.includes('…')) {
+      setStatus('Сначала введи номер заказа.');
+      numberInput.focus();
+      return;
+    }
+    speakingToken++;
+    const token = speakingToken;
+    synth.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = selectedVoice()?.lang || 'ru-RU';
+    const v = selectedVoice();
+    if (v) utterance.voice = v;
+    utterance.rate = Number($('rate').value);
+    utterance.pitch = Number($('pitch').value);
+    utterance.volume = Number($('volume').value);
+    utterance.onstart = () => { if (token === speakingToken) setStatus('Сейчас звучит объявление…', true); };
+    utterance.onend = () => { if (token === speakingToken) setStatus('Готово. Можно озвучить следующий заказ.'); };
+    utterance.onerror = (e) => {
+      if (token === speakingToken && e.error !== 'canceled' && e.error !== 'interrupted') setStatus('Не удалось воспроизвести речь. Попробуй другой голос.');
+    };
+    lastText = text;
+    $('repeatBtn').disabled = false;
+    if (addToHistory) addHistory(text);
+    setStatus('Подготовка речи…');
+    synth.speak(utterance);
+  }
+  function addHistory(text) {
+    history.unshift({text, time:new Date()});
+    history = history.slice(0,30);
+    renderHistory();
+  }
+  function renderHistory() {
+    const list = $('historyList');
+    list.replaceChildren();
+    if (!history.length) {
+      const li = document.createElement('li');
+      li.className = 'empty';
+      li.textContent = 'Здесь появятся озвученные заказы.';
+      list.append(li);
+      return;
+    }
+    history.forEach((item, i) => {
+      const li = document.createElement('li');
+      const body = document.createElement('div');
+      body.className = 'history-text';
+      const text = document.createElement('div');
+      text.textContent = item.text;
+      const time = document.createElement('time');
+      time.textContent = item.time.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+      body.append(text,time);
+      const actions = document.createElement('div');
+      actions.className = 'history-actions';
+      const play = document.createElement('button');
+      play.className = 'iconbtn';
+      play.textContent = '▶';
+      play.title = 'Озвучить снова';
+      play.setAttribute('aria-label','Озвучить снова');
+      play.addEventListener('click', () => speak(item.text, false));
+      const copy = document.createElement('button');
+      copy.className = 'iconbtn';
+      copy.textContent = 'Копировать';
+      copy.addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(item.text); copy.textContent='Готово'; }
+        catch { setStatus('Копирование недоступно в этом браузере.'); }
+      });
+      actions.append(play,copy);
+      li.append(body,actions);
+      list.append(li);
+    });
+  }
+  function updateRangeOutputs() {
+    $('rateOut').textContent = Number($('rate').value).toFixed(2).replace('.',',') + '×';
+    $('pitchOut').textContent = Number($('pitch').value).toFixed(2).replace('.',',');
+    $('volumeOut').textContent = Math.round(Number($('volume').value)*100) + '%';
+  }
+
+  numberInput.addEventListener('input', updatePreview);
+  template.addEventListener('change', updatePreview);
+  customText.addEventListener('input', updatePreview);
+  $('languageSelect').addEventListener('change', loadVoices);
+  $('refreshVoicesBtn').addEventListener('click', loadVoices);
+  ['rate','pitch','volume'].forEach(id => $(id).addEventListener('input', updateRangeOutputs));
+  $('speakBtn').addEventListener('click', () => speak(buildText()));
+  $('repeatBtn').addEventListener('click', () => speak(lastText, false));
+  $('stopBtn').addEventListener('click', () => {
+    speakingToken++;
+    if (synth) synth.cancel();
+    setStatus('Воспроизведение остановлено.');
+  });
+  $('testBtn').addEventListener('click', () => speak('Здравствуйте! Проверка голоса. Заказ номер сто двадцать пять готов к выдаче.', false));
+  $('clearBtn').addEventListener('click', () => { history=[]; renderHistory(); });
+  $('exportBtn').addEventListener('click', () => {
+    if (!history.length) { setStatus('История пока пуста.'); return; }
+    const content = history.slice().reverse().map(x => `[${x.time.toLocaleString()}] ${x.text}`).join('\n');
+    const blob = new Blob([content], {type:'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'istoriya-zakazov.txt'; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  if (synth) {
+    loadVoices();
+    synth.addEventListener?.('voiceschanged', loadVoices);
+    // Some mobile browsers populate voices asynchronously without firing voiceschanged.
+    setTimeout(loadVoices, 500);
+    setTimeout(loadVoices, 1500);
+  } else loadVoices();
+  updatePreview();
+  updateRangeOutputs();
+})();
+</script>
+</body>
+</html>
